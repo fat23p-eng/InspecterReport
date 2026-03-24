@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบรายงานผลการตรวจการสหกรณ์</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@400;600;700&display=swap');
+  :root{
+    --primary:#1a3a5c;--primary-light:#2563a8;--accent:#c8960c;--accent2:#16a085;
+    --bg:#f0f3f8;--surface:#fff;--surface2:#f7f9fc;--border:#dde3ec;
+    --text:#1e2d3d;--text2:#5a6a7e;
+    --danger:#c0392b;--success:#1e8449;--warning:#d4700a;
+    --shadow:0 2px 12px rgba(26,58,92,.09);--shadow-lg:0 8px 32px rgba(26,58,92,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh;}
+  .app-shell{display:flex;min-height:100vh;}
+
+  /* ── SIDEBAR ── */
+  .sidebar{width:264px;min-width:264px;background:linear-gradient(180deg,#0f2540 0%,#1a3a5c 100%);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;}
+
+  /* LOGO area */
+  .sidebar-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .logo-svg-wrap{width:68px;height:68px;background:linear-gradient(135deg,#c8960c,#e8b922);border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(200,150,12,.4);flex-shrink:0;}
+  .sidebar-logo h2{font-size:13px;font-weight:700;line-height:1.5;opacity:.97;text-align:center;}
+  .sidebar-logo p{font-size:10.5px;opacity:.5;text-align:center;}
+
+  .sidebar-nav{padding:8px 8px 16px;flex:1;}
+  .nav-sec{font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;opacity:.38;padding:10px 10px 3px;font-weight:700;}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;opacity:.7;transition:all .18s;margin-bottom:1px;}
+  .nav-item:hover{background:rgba(255,255,255,.1);opacity:1;}
+  .nav-item.active{background:rgba(255,255,255,.16);opacity:1;font-weight:600;}
+  .nav-item .ni-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+  .nav-item .badge{margin-left:auto;background:var(--accent);color:#fff;border-radius:10px;font-size:9.5px;padding:1px 7px;font-weight:700;}
+
+  /* ── MAIN ── */
+  .main-content{margin-left:264px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 26px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:var(--shadow);}
+  .topbar-title{font-size:15px;font-weight:700;color:var(--primary);}
+  .topbar-sub{font-size:11px;color:var(--text2);}
+  .topbar-right{display:flex;align-items:center;gap:8px;}
+
+  /* ── BUTTONS ── */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;border:none;transition:all .18s;font-family:'Sarabun',sans-serif;}
+  .btn-primary{background:var(--primary-light);color:#fff;}.btn-primary:hover{background:var(--primary);}
+  .btn-accent{background:var(--accent);color:#fff;}.btn-accent:hover{filter:brightness(.9);}
+  .btn-outline{background:transparent;color:var(--primary-light);border:1.5px solid var(--primary-light);}.btn-outline:hover{background:var(--primary-light);color:#fff;}
+  .btn-success{background:var(--success);color:#fff;}.btn-success:hover{filter:brightness(.9);}
+  .btn-danger{background:var(--danger);color:#fff;}.btn-danger:hover{filter:brightness(.9);}
+  .btn-sm{padding:5px 12px;font-size:12px;}
+  .btn-xs{padding:3px 9px;font-size:11.5px;}
+
+  /* ── PAGES ── */
+  .page{display:none;padding:22px 26px;animation:fadeIn .2s;}
+  .page.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── DASHBOARD ── */
+  .dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+  .stat-card{background:var(--surface);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);border-left:4px solid var(--primary-light);transition:transform .18s;}
+  .stat-card:hover{transform:translateY(-2px);}
+  .stat-card.green{border-left-color:var(--success);}.stat-card.gold{border-left-color:var(--accent);}.stat-card.red{border-left-color:var(--danger);}
+  .stat-card .lbl{font-size:11px;color:var(--text2);font-weight:600;}
+  .stat-card .val{font-size:22px;font-weight:700;color:var(--primary);margin:3px 0 2px;font-family:'Noto Serif Thai',serif;}
+  .stat-card .sub{font-size:10.5px;color:var(--text2);}
+  .dash-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px;}
+  .card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;}
+  .card-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2);}
+  .card-header h3{font-size:13px;font-weight:700;color:var(--primary);}
+  .card-body{padding:16px;}
+  .progress-item{margin-bottom:10px;}
+  .progress-label{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px;}
+  .progress-bar{height:6px;border-radius:3px;background:var(--border);overflow:hidden;}
+  .progress-fill{height:100%;border-radius:3px;transition:width .6s;}
+  .team-list{display:flex;flex-direction:column;gap:8px;}
+  .team-member{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);}
+  .avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+  .tm-info{flex:1;}.tm-name{font-size:12.5px;font-weight:600;}.tm-role{font-size:10.5px;color:var(--text2);}
+  .sdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .sdot.done{background:var(--success);}.sdot.work{background:var(--warning);}.sdot.pend{background:var(--border);}
+
+  /* ── FORM ── */
+  .form-sec{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;}
+  .form-sec-hd{background:linear-gradient(90deg,var(--primary),var(--primary-light));color:#fff;padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;}
+  .sec-num{background:rgba(255,255,255,.22);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;flex-shrink:0;}
+  .form-sec-body{padding:16px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+  .form-group{margin-bottom:11px;}
+  .form-group label{display:block;font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:4px;}
+  .req{color:var(--danger);margin-left:2px;}
+  .form-control{width:100%;padding:7px 11px;border-radius:7px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;color:var(--text);font-family:'Sarabun',sans-serif;transition:border-color .18s;}
+  .form-control:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(37,99,168,.1);}
+  textarea.form-control{resize:vertical;min-height:78px;}
+
+  /* ── TABS ── */
+  .tabs{display:flex;gap:3px;border-bottom:2px solid var(--border);margin-bottom:16px;flex-wrap:wrap;}
+  .tab{padding:7px 15px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .18s;white-space:nowrap;}
+  .tab.active{color:var(--primary-light);border-bottom-color:var(--primary-light);}
+  .tab-content{display:none;}.tab-content.active{display:block;}
+
+  /* ── TABLES ── */
+  .data-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .data-table th{background:var(--primary);color:#fff;padding:8px 11px;text-align:left;font-weight:600;font-size:12px;}
+  .data-table td{padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  .data-table tr:hover td{background:var(--surface2);}
+  .ct-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .ct-table th{background:var(--primary-light);color:#fff;padding:7px 9px;font-size:12px;}
+  .ct-table td{padding:7px 9px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  .ct-table tr:nth-child(even) td{background:var(--surface2);}
+  .ct-table input,.ct-table select{border:1px solid var(--border);border-radius:5px;padding:4px 7px;font-size:12px;font-family:'Sarabun',sans-serif;width:100%;background:var(--surface);}
+  .ct-table input:focus,.ct-table select:focus{outline:none;border-color:var(--primary-light);}
+
+  /* ── UPLOAD ── */
+  .upload-zone{border:2px dashed var(--border);border-radius:11px;padding:24px;text-align:center;cursor:pointer;transition:all .18s;background:var(--surface2);}
+  .upload-zone:hover{border-color:var(--primary-light);background:#eef4ff;}
+  .file-list{margin-top:10px;display:flex;flex-direction:column;gap:5px;}
+  .file-item{display:flex;align-items:center;gap:9px;padding:7px 11px;background:var(--surface);border-radius:7px;border:1px solid var(--border);font-size:13px;}
+  .file-item .fi-meta{flex:1;min-width:0;}
+  .file-item .fi-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .file-item .fi-size{font-size:11px;color:var(--text2);}
+  .rm-btn{cursor:pointer;color:var(--danger);font-size:15px;border:none;background:none;padding:0;flex-shrink:0;}
+
+  /* ── TAGS ── */
+  .tag{display:inline-flex;align-items:center;gap:3px;border-radius:5px;padding:2px 9px;font-size:11px;font-weight:600;}
+  .tag-default{background:#e8edf5;color:var(--primary);}
+  .tag-ok{background:#e6f4ea;color:var(--success);}
+  .tag-warn{background:#fff3e0;color:var(--warning);}
+  .tag-danger{background:#fde8e8;color:var(--danger);}
+
+  /* ── ALERT ── */
+  .alert{padding:10px 14px;border-radius:8px;margin-bottom:13px;font-size:13px;display:flex;align-items:flex-start;gap:9px;}
+  .alert-info{background:#e8f4fd;border-left:4px solid var(--primary-light);color:var(--primary);}
+
+  /* ── IMPORT BOX ── */
+  .import-box{background:var(--surface);border-radius:12px;padding:28px;box-shadow:var(--shadow);text-align:center;border:2px dashed var(--primary-light);}
+
+  /* ── MODAL ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:1000;align-items:center;justify-content:center;}
+  .modal-overlay.active{display:flex;}
+  .modal{background:var(--surface);border-radius:14px;max-width:940px;width:96%;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+  .modal-header{padding:15px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:10;}
+  .modal-body{padding:22px;}
+  .modal-footer{padding:13px 22px;border-top:1px solid var(--border);display:flex;gap:9px;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface);}
+  .close-btn{cursor:pointer;font-size:21px;color:var(--text2);background:none;border:none;line-height:1;}
+
+  /* ── LOAN TYPE BADGE ── */
+  .loan-type-badge{display:inline-block;border-radius:20px;padding:2px 12px;font-size:11px;font-weight:700;border:1.5px solid;}
+  .lt-emergency{background:#fff3e0;color:#b45309;border-color:#f59e0b;}
+  .lt-ordinary{background:#e8f4fd;color:#1d4ed8;border-color:#3b82f6;}
+  .lt-special{background:#f0fdf4;color:#15803d;border-color:#22c55e;}
+
+  /* ── DOC UPLOAD PAGE ── */
+  .doc-section{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;}
+  .doc-section-hd{display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--surface2);border-bottom:1px solid var(--border);}
+  .doc-section-hd .dsh-icon{font-size:20px;}
+  .doc-section-hd h3{font-size:13.5px;font-weight:700;color:var(--primary);flex:1;}
+  .doc-section-body{padding:16px;}
+
+  /* ── TOAST ── */
+  #toast{position:fixed;bottom:20px;right:20px;background:#1a3a5c;color:#fff;padding:10px 20px;border-radius:9px;font-size:13.5px;font-family:'Sarabun',sans-serif;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.22);transition:all .3s;opacity:0;transform:translateY(8px);pointer-events:none;}
+
+  /* ── PRINT ── */
+  @media print{
+    .sidebar,.topbar,.no-print{display:none!important;}
+    .main-content{margin-left:0!important;}
+    body{background:#fff;}
+    .page{display:none!important;}
+    #page-form{display:block!important;padding:0!important;}
+    #page-form .no-print,#page-form .tabs,#page-form .tab-content:not(.active){display:none!important;}
+    .form-sec{box-shadow:none;border:1px solid #ccc;margin-bottom:10px;page-break-inside:avoid;}
+    .form-control{border:none;}textarea.form-control{border-bottom:1px solid #ccc;}
+  }
+  @media(max-width:1100px){.dash-grid{grid-template-columns:repeat(2,1fr);}.dash-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ════ SIDEBAR ════ -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <!-- SVG Logo: รายงานผลการปฏิบัติงาน -->
+      <div class="logo-svg-wrap">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Document base -->
+          <rect x="6" y="3" width="26" height="34" rx="3" fill="white" fill-opacity="0.95"/>
+          <rect x="6" y="3" width="26" height="34" rx="3" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+          <!-- Folded corner -->
+          <path d="M26 3 L32 9 L26 9 Z" fill="#e8b922" fill-opacity="0.7"/>
+          <!-- Lines of text -->
+          <rect x="10" y="14" width="14" height="2" rx="1" fill="#1a3a5c" fill-opacity="0.4"/>
+          <rect x="10" y="19" width="18" height="2" rx="1" fill="#1a3a5c" fill-opacity="0.3"/>
+          <rect x="10" y="24" width="12" height="2" rx="1" fill="#1a3a5c" fill-opacity="0.3"/>
+          <!-- Bar chart overlay -->
+          <rect x="10" y="29" width="4" height="5" rx="1" fill="#1a3a5c" fill-opacity="0.5"/>
+          <rect x="16" y="26" width="4" height="8" rx="1" fill="#c8960c" fill-opacity="0.85"/>
+          <rect x="22" y="27" width="4" height="7" rx="1" fill="#1a3a5c" fill-opacity="0.4"/>
+          <!-- Checkmark circle -->
+          <circle cx="35" cy="33" r="7" fill="#1e8449"/>
+          <path d="M31.5 33 L34 35.5 L38.5 30.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>ระบบรายงานผลการ<br>ตรวจการสหกรณ์</h2>
+      <p>กรมส่งเสริมสหกรณ์</p>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-sec">เมนูหลัก</div>
+      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="ni-icon">📊</span><span>Dashboard</span></div>
+      <div class="nav-item" onclick="showPage('form',this)"><span class="ni-icon">📝</span><span>กรอกแบบรายงาน</span><span class="badge">กจส.</span></div>
+
+      <div class="nav-sec" style="margin-top:6px;">ข้อมูลการตรวจสอบ</div>
+      <div class="nav-item" onclick="showPage('loans',this)"><span class="ni-icon">💳</span><span>ข้อมูลเงินกู้</span></div>
+      <div class="nav-item" onclick="showPage('attachments',this)"><span class="ni-icon">📎</span><span>เอกสารแนบทั่วไป</span></div>
+
+      <div class="nav-sec" style="margin-top:6px;">เอกสารราชการ</div>
+      <div class="nav-item" onclick="showPage('doc-appointment',this)"><span class="ni-icon">📋</span><span>คำสั่งแต่งตั้งผู้ตรวจการ</span></div>
+      <div class="nav-item" onclick="showPage('doc-notify',this)"><span class="ni-icon">📨</span><span>หนังสือแจ้งสหกรณ์</span></div>
+      <div class="nav-item" onclick="showPage('doc-other',this)"><span class="ni-icon">🗂️</span><span>เอกสารอื่นๆ</span></div>
+
+      <div class="nav-sec" style="margin-top:6px;">จัดการ</div>
+      <div class="nav-item" onclick="showPage('import',this)"><span class="ni-icon">📥</span><span>นำเข้าข้อมูล</span></div>
+      <div class="nav-item" onclick="showPage('team',this)"><span class="ni-icon">👥</span><span>ทีมผู้ตรวจการ</span></div>
+
+      <div class="nav-sec" style="margin-top:6px;">ส่งออก</div>
+      <div class="nav-item" onclick="showPreview()"><span class="ni-icon">👁️</span><span>Preview ก่อนส่งออก</span></div>
+      <div class="nav-item" onclick="exportWord()"><span class="ni-icon">📄</span><span>ส่งออก Word</span></div>
+      <div class="nav-item" onclick="doPrint()"><span class="ni-icon">🖨️</span><span>พิมพ์รายงาน</span></div>
+    </div>
+  </nav>
+
+  <!-- ════ MAIN ════ -->
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Dashboard ภาพรวม</div>
+        <div class="topbar-sub" id="topbar-sub">สหกรณ์ออมทรัพย์พนักงานเทศบาล จำกัด | ชุดที่ 8 (กจส.68/69)</div>
+      </div>
+      <div class="topbar-right no-print">
+        <button class="btn btn-outline btn-sm" onclick="saveAll()">💾 บันทึก</button>
+        <button class="btn btn-accent btn-sm" onclick="showPreview()">👁️ Preview</button>
+        <button class="btn btn-primary btn-sm" onclick="exportWord()">📄 ส่งออก Word</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="dash-grid">
+        <div class="stat-card"><div class="lbl">จำนวนสมาชิก</div><div class="val">41,987</div><div class="sub">ณ วันที่ตรวจสอบ</div></div>
+        <div class="stat-card green"><div class="lbl">กำไรสุทธิประจำปี</div><div class="val">542.5 ล้าน</div><div class="sub">บาท (ปี 2567)</div></div>
+        <div class="stat-card gold"><div class="lbl">รายการที่กรอกแล้ว</div><div class="val" id="dash-filled">0 / 16</div><div class="sub">รายการตรวจสอบ</div></div>
+        <div class="stat-card red"><div class="lbl">ความคืบหน้า</div><div class="val" id="dash-pct">0%</div><div class="sub">ภาพรวมการกรอกรายงาน</div></div>
+      </div>
+      <div class="dash-row">
+        <div class="card">
+          <div class="card-header"><h3>📊 ความคืบหน้ารายการตรวจสอบ</h3><span class="tag tag-default">กจส.68/69</span></div>
+          <div class="card-body" id="progress-list" style="max-height:300px;overflow-y:auto;"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>👥 สถานะทีมผู้ตรวจ</h3></div>
+          <div class="card-body">
+            <div class="team-list">
+              <div class="team-member"><div class="avatar" style="background:#1a3a5c">รช</div><div class="tm-info"><div class="tm-name">นายเรืองชัย โพนพุฒ</div><div class="tm-role">ประธาน | นักวิชาการสหกรณ์ ชพ.</div></div><div class="sdot done"></div></div>
+              <div class="team-member"><div class="avatar" style="background:#2563a8">ฐต</div><div class="tm-info"><div class="tm-name">นางสาวฐิติมา กรวาทิน</div><div class="tm-role">ผู้ตรวจการ | นักวิชาการสหกรณ์ ปก.</div></div><div class="sdot work"></div></div>
+              <div class="team-member"><div class="avatar" style="background:#16a085">นธ</div><div class="tm-info"><div class="tm-name">นางสาวนิธิกานต์ จ่าราช</div><div class="tm-role">ผู้ตรวจการ | นักวิชาการสหกรณ์ ปก.</div></div><div class="sdot work"></div></div>
+              <div class="team-member"><div class="avatar" style="background:#c8960c">จม</div><div class="tm-info"><div class="tm-name">นางสาวจุฑามาศ พัดทอง</div><div class="tm-role">ผู้ตรวจการ | นักวิชาการสหกรณ์ ปก.</div></div><div class="sdot pend"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>📋 สรุปข้อมูลสำคัญ</h3><span class="tag tag-ok">✓ ตรวจ 13-14 พ.ย. 2568</span></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px;font-size:13px;">
+            <div style="padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text2);font-weight:600">สหกรณ์</div><div style="font-weight:700;color:var(--primary);margin-top:3px;font-size:12.5px">สหกรณ์ออมทรัพย์พนักงานเทศบาล จำกัด</div></div>
+            <div style="padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text2);font-weight:600">กรรมการดำเนินการ</div><div style="font-weight:700;color:var(--primary);margin-top:3px">15 คน (ครบตามข้อบังคับ)</div></div>
+            <div style="padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text2);font-weight:600">เงินรับฝากสมาชิก</div><div style="font-weight:700;color:var(--primary);margin-top:3px">1,612,577,875.18 บาท</div></div>
+            <div style="padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text2);font-weight:600">การลงทุน (17 รายการ)</div><div style="font-weight:700;color:var(--primary);margin-top:3px">2,619,005,238.60 บาท</div></div>
+            <div style="padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text2);font-weight:600">สินทรัพย์สภาพคล่อง ต.ค.68</div><div style="font-weight:700;color:var(--success);margin-top:3px">44.19% ✓ ผ่านเกณฑ์</div></div>
+            <div style="padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text2);font-weight:600">ประชุมกรรมการ ปี 2568</div><div style="font-weight:700;color:var(--primary);margin-top:3px">10 ครั้ง (ม.ค.-ต.ค. 68)</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: FORM ══ -->
+    <div class="page" id="page-form">
+      <div class="alert alert-info no-print">📌 เจ้าหน้าที่แต่ละคนกรอกเฉพาะส่วนที่รับผิดชอบ ระบบบันทึกอัตโนมัติ</div>
+      <div class="tabs no-print">
+        <div class="tab active" onclick="showTab('tab-hd',this)">📄 ข้อมูลส่วนหัว</div>
+        <div class="tab" onclick="showTab('tab-s1',this)">📊 รายการ 1–8</div>
+        <div class="tab" onclick="showTab('tab-s2',this)">💰 รายการ 9–16</div>
+        <div class="tab" onclick="showTab('tab-sig',this)">✍️ ผู้ลงนาม</div>
+      </div>
+      <div class="tab-content active" id="tab-hd">
+        <div class="form-sec">
+          <div class="form-sec-hd"><div class="sec-num">☆</div>ข้อมูลผู้ตรวจและสหกรณ์ที่เข้าตรวจ</div>
+          <div class="form-sec-body">
+            <div class="form-grid">
+              <div class="form-group"><label>ชื่อประธานผู้ตรวจการ<span class="req">*</span></label><input class="form-control" id="f-head" value="นายเรืองชัย โพนพุฒ" oninput="updateSubtitle()"></div>
+              <div class="form-group"><label>ตำแหน่ง</label><input class="form-control" id="f-head-pos" value="นักวิชาการสหกรณ์ชำนาญการพิเศษ"></div>
+              <div class="form-group"><label>ชุดที่ / รหัส</label><input class="form-control" id="f-team" value="ชุดที่ 8 (กจส.68/69)" oninput="updateSubtitle()"></div>
+              <div class="form-group"><label>ชื่อสหกรณ์<span class="req">*</span></label><input class="form-control" id="f-coop" value="สหกรณ์ออมทรัพย์พนักงานเทศบาล จำกัด" oninput="updateSubtitle()"></div>
+              <div class="form-group"><label>วันที่ตรวจ (เริ่ม)</label><input class="form-control" type="date" id="f-date1" value="2025-11-13"></div>
+              <div class="form-group"><label>วันที่ตรวจ (สิ้นสุด)</label><input class="form-control" type="date" id="f-date2" value="2025-11-14"></div>
+              <div class="form-group"><label>เวลา</label><input class="form-control" id="f-time" value="09.30 น. เป็นต้นไป"></div>
+              <div class="form-group"><label>อ้างอิงกฎหมาย</label><input class="form-control" id="f-law" value="มาตรา 19 แห่งพระราชบัญญัติสหกรณ์ พ.ศ. 2542"></div>
+            </div>
+            <div class="form-group"><label>รายชื่อผู้ตรวจการร่วม (ชื่อ - ตำแหน่ง ต่อบรรทัด)</label>
+              <textarea class="form-control" id="f-insp" rows="3">นางสาวฐิติมา กรวาทิน - นักวิชาการสหกรณ์ปฏิบัติการ
+นางสาวนิธิกานต์ จ่าราช - นักวิชาการสหกรณ์ปฏิบัติการ
+นางสาวจุฑามาศ พัดทอง - นักวิชาการสหกรณ์ปฏิบัติการ</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-s1"><div id="secs-1-8"></div></div>
+      <div class="tab-content" id="tab-s2"><div id="secs-9-16"></div></div>
+      <div class="tab-content" id="tab-sig">
+        <div class="form-sec">
+          <div class="form-sec-hd"><div class="sec-num">✍</div>ลายมือชื่อผู้ตรวจการสหกรณ์</div>
+          <div class="form-sec-body">
+            <div class="form-grid">
+              <div class="form-group"><label>ผู้ตรวจการที่ 1 (ประธาน)</label><input class="form-control" id="sig1" value="นายเรืองชัย โพนพุฒ"></div>
+              <div class="form-group"><label>ผู้ตรวจการที่ 2</label><input class="form-control" id="sig2" value="นางสาวฐิติมา กรวาทิน"></div>
+              <div class="form-group"><label>ผู้ตรวจการที่ 3</label><input class="form-control" id="sig3" value="นางสาวจุฑามาศ พัดทอง"></div>
+              <div class="form-group"><label>ผู้ตรวจการที่ 4</label><input class="form-control" id="sig4" value="นางสาวนิธิกานต์ จ่าราช"></div>
+            </div>
+            <div class="form-group"><label>ข้อความท้ายรายงาน</label><textarea class="form-control" id="f-note" rows="2">ข้าพเจ้าจึงเรียนนายทะเบียนสหกรณ์มาเพื่อโปรดพิจารณา</textarea></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;" class="no-print">
+        <button class="btn btn-outline" onclick="saveAll()">💾 บันทึก</button>
+        <button class="btn btn-accent" onclick="showPreview()">👁️ Preview</button>
+        <button class="btn btn-primary" onclick="exportWord()">📄 ส่งออก Word</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: LOANS ══ -->
+    <div class="page" id="page-loans">
+      <div class="tabs" id="loan-tabs">
+        <div class="tab active" onclick="switchLoanTab('emergency',this)">🔴 เงินกู้ฉุกเฉิน</div>
+        <div class="tab" onclick="switchLoanTab('atm',this)">🟠 เงินกู้ฉุกเฉิน ATM</div>
+        <div class="tab" onclick="switchLoanTab('ordinary',this)">🔵 เงินกู้สามัญ</div>
+        <div class="tab" onclick="switchLoanTab('special',this)">🟢 เงินกู้พิเศษ</div>
+      </div>
+
+      <!-- ตารางแต่ละประเภท -->
+      <div id="lt-emergency" class="loan-tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <h3>เงินกู้เพื่อเหตุฉุกเฉิน <span class="loan-type-badge lt-emergency">ฉุกเฉิน</span></h3>
+              <span class="tag tag-default" id="em-count">21 สัญญา | เอกสารแนบ 1</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-success btn-sm" onclick="addLoanRow('em')">+ เพิ่มสัญญา</button>
+              <button class="btn btn-outline btn-sm" onclick="saveLoanData('em')">💾 บันทึก</button>
+            </div>
+          </div>
+          <div class="card-body" style="overflow-x:auto;padding:0;">
+            <table class="ct-table" id="em-table">
+              <thead><tr>
+                <th style="width:36px">#</th>
+                <th style="min-width:140px">เลขที่สัญญา</th>
+                <th style="min-width:90px">สมาชิกเลขที่</th>
+                <th style="min-width:160px">ชื่อสมาชิก</th>
+                <th style="min-width:110px">วงเงิน (บาท)</th>
+                <th style="min-width:60px">งวด</th>
+                <th style="min-width:110px">วันที่จ่าย</th>
+                <th style="min-width:130px">เลขบัญชีธนาคาร</th>
+                <th style="width:70px">จัดการ</th>
+              </tr></thead>
+              <tbody id="em-tbody"></tbody>
+              <tfoot><tr style="background:#f0f3f8;font-weight:700">
+                <td colspan="4" style="padding:7px 9px;text-align:right;font-size:12px">รวมทั้งสิ้น</td>
+                <td id="em-total" style="padding:7px 9px;text-align:right;font-size:12px"></td>
+                <td colspan="4"></td>
+              </tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="lt-atm" class="loan-tab-content" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:10px;"><h3>เงินกู้ฉุกเฉิน ATM <span class="loan-type-badge lt-emergency">ฉุกเฉิน ATM</span></h3></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-success btn-sm" onclick="addLoanRow('atm')">+ เพิ่มสัญญา</button>
+              <button class="btn btn-outline btn-sm" onclick="saveLoanData('atm')">💾 บันทึก</button>
+            </div>
+          </div>
+          <div class="card-body" style="overflow-x:auto;padding:0;">
+            <table class="ct-table" id="atm-table">
+              <thead><tr><th>#</th><th>เลขที่สัญญา</th><th>สมาชิกเลขที่</th><th>ชื่อสมาชิก</th><th>วงเงิน (บาท)</th><th>งวด</th><th>วันที่จ่าย</th><th>เลขบัญชีธนาคาร</th><th>จัดการ</th></tr></thead>
+              <tbody id="atm-tbody"></tbody>
+              <tfoot><tr style="background:#f0f3f8;font-weight:700"><td colspan="4" style="padding:7px 9px;text-align:right;font-size:12px">รวมทั้งสิ้น</td><td id="atm-total" style="padding:7px 9px;text-align:right;font-size:12px"></td><td colspan="4"></td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="lt-ordinary" class="loan-tab-content" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:10px;"><h3>เงินกู้สามัญ (บุคคลค้ำประกัน) <span class="loan-type-badge lt-ordinary">สามัญ</span></h3></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-success btn-sm" onclick="addLoanRow('or')">+ เพิ่มสัญญา</button>
+              <button class="btn btn-outline btn-sm" onclick="saveLoanData('or')">💾 บันทึก</button>
+            </div>
+          </div>
+          <div class="card-body" style="overflow-x:auto;padding:0;">
+            <table class="ct-table" id="or-table">
+              <thead><tr><th>#</th><th>เลขที่สัญญา</th><th>วันที่ลงนาม</th><th>ชื่อสมาชิก</th><th>สมาชิกเลขที่</th><th>วงเงิน (บาท)</th><th>งวด</th><th>ผู้ค้ำประกัน</th><th>จัดการ</th></tr></thead>
+              <tbody id="or-tbody"></tbody>
+              <tfoot><tr style="background:#f0f3f8;font-weight:700"><td colspan="5" style="padding:7px 9px;text-align:right;font-size:12px">รวมทั้งสิ้น</td><td id="or-total" style="padding:7px 9px;text-align:right;font-size:12px"></td><td colspan="3"></td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="lt-special" class="loan-tab-content" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:10px;"><h3>เงินกู้พิเศษ <span class="loan-type-badge lt-special">พิเศษ</span></h3></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-success btn-sm" onclick="addLoanRow('sp')">+ เพิ่มสัญญา</button>
+              <button class="btn btn-outline btn-sm" onclick="saveLoanData('sp')">💾 บันทึก</button>
+            </div>
+          </div>
+          <div class="card-body" style="overflow-x:auto;padding:0;">
+            <table class="ct-table" id="sp-table">
+              <thead><tr><th>#</th><th>เลขที่สัญญา</th><th>วันที่ลงนาม</th><th>ชื่อสมาชิก</th><th>สมาชิกเลขที่</th><th>วงเงิน (บาท)</th><th>งวด</th><th>หลักประกัน</th><th>จัดการ</th></tr></thead>
+              <tbody id="sp-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text2);padding:20px;font-size:13px">ยังไม่มีข้อมูล — คลิก "+ เพิ่มสัญญา" เพื่อเพิ่มข้อมูล</td></tr></tbody>
+              <tfoot><tr style="background:#f0f3f8;font-weight:700"><td colspan="5" style="padding:7px 9px;text-align:right;font-size:12px">รวมทั้งสิ้น</td><td id="sp-total" style="padding:7px 9px;text-align:right;font-size:12px">0</td><td colspan="3"></td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: ATTACHMENTS (ทั่วไป) ══ -->
+    <div class="page" id="page-attachments">
+      <div class="card">
+        <div class="card-header"><h3>📎 เอกสารแนบทั่วไป</h3><button class="btn btn-primary btn-sm" onclick="document.getElementById('fi-gen').click()">+ อัปโหลดไฟล์</button></div>
+        <div class="card-body">
+          <div class="upload-zone" onclick="document.getElementById('fi-gen').click()" ondragover="event.preventDefault()" ondrop="doDrop(event,'file-list-gen')">
+            <div style="font-size:32px;margin-bottom:6px">📁</div>
+            <p style="font-size:13px">ลากไฟล์มาวางที่นี่ หรือ <strong style="color:var(--primary-light)">คลิกเพื่อเลือก</strong></p>
+            <p style="font-size:11px;color:var(--text2);margin-top:4px">PDF, Word, Excel, JPG, PNG ไม่เกิน 20 MB</p>
+          </div>
+          <input type="file" id="fi-gen" style="display:none" multiple onchange="addFiles(this,'file-list-gen')">
+          <div class="file-list" id="file-list-gen">
+            <div class="file-item"><span>📄</span><div class="fi-meta"><div class="fi-name">เอกสารแนบ 1 - สัญญาเงินกู้ฉุกเฉิน (21 สัญญา).pdf</div><div class="fi-size">เอกสารแนบ 1</div></div><button class="rm-btn" onclick="this.closest('.file-item').remove()">✕</button></div>
+            <div class="file-item"><span>📄</span><div class="fi-meta"><div class="fi-name">เอกสารแนบ 2 - สัญญาเงินกู้สามัญ (10 สัญญา).pdf</div><div class="fi-size">เอกสารแนบ 2</div></div><button class="rm-btn" onclick="this.closest('.file-item').remove()">✕</button></div>
+            <div class="file-item"><span>📊</span><div class="fi-meta"><div class="fi-name">เอกสารแนบ 3 - บัญชีเงินฝาก 2566 (103 บัญชี).xlsx</div><div class="fi-size">เอกสารแนบ 3</div></div><button class="rm-btn" onclick="this.closest('.file-item').remove()">✕</button></div>
+            <div class="file-item"><span>📊</span><div class="fi-meta"><div class="fi-name">เอกสารแนบ 4 - บัญชีเงินฝาก 2567 (287 บัญชี).xlsx</div><div class="fi-size">เอกสารแนบ 4</div></div><button class="rm-btn" onclick="this.closest('.file-item').remove()">✕</button></div>
+            <div class="file-item"><span>📊</span><div class="fi-meta"><div class="fi-name">เอกสารแนบ 5 - บัญชีเงินฝาก 2568 (341 บัญชี).xlsx</div><div class="fi-size">เอกสารแนบ 5</div></div><button class="rm-btn" onclick="this.closest('.file-item').remove()">✕</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: คำสั่งแต่งตั้ง ══ -->
+    <div class="page" id="page-doc-appointment">
+      <div class="doc-section">
+        <div class="doc-section-hd">
+          <span class="dsh-icon">📋</span>
+          <h3>คำสั่งแต่งตั้งผู้ตรวจการสหกรณ์</h3>
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('fi-apt').click()">+ อัปโหลดไฟล์</button>
+        </div>
+        <div class="doc-section-body">
+          <div class="alert alert-info">💡 อัปโหลดคำสั่งแต่งตั้งคณะผู้ตรวจการสหกรณ์ทุกฉบับที่เกี่ยวข้องกับการตรวจครั้งนี้</div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group"><label>เลขที่คำสั่ง</label><input class="form-control" id="apt-no" placeholder="เช่น คส. 123/2568"></div>
+            <div class="form-group"><label>วันที่ออกคำสั่ง</label><input class="form-control" type="date" id="apt-date"></div>
+            <div class="form-group"><label>ออกโดย</label><input class="form-control" id="apt-by" placeholder="เช่น อธิบดีกรมส่งเสริมสหกรณ์"></div>
+            <div class="form-group"><label>เรื่อง</label><input class="form-control" id="apt-subject" placeholder="เรื่องของคำสั่ง"></div>
+          </div>
+          <div class="upload-zone" onclick="document.getElementById('fi-apt').click()" ondragover="event.preventDefault()" ondrop="doDrop(event,'file-list-apt')">
+            <div style="font-size:32px;margin-bottom:6px">📋</div>
+            <p style="font-size:13px">ลากไฟล์คำสั่งแต่งตั้งมาวาง หรือ <strong style="color:var(--primary-light)">คลิกเพื่อเลือก</strong></p>
+            <p style="font-size:11px;color:var(--text2);margin-top:4px">รองรับ PDF, Word, JPG, PNG</p>
+          </div>
+          <input type="file" id="fi-apt" style="display:none" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="addFiles(this,'file-list-apt')">
+          <div class="file-list" id="file-list-apt"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: หนังสือแจ้งสหกรณ์ ══ -->
+    <div class="page" id="page-doc-notify">
+      <div class="doc-section">
+        <div class="doc-section-hd">
+          <span class="dsh-icon">📨</span>
+          <h3>หนังสือแจ้งสหกรณ์</h3>
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('fi-nty').click()">+ อัปโหลดไฟล์</button>
+        </div>
+        <div class="doc-section-body">
+          <div class="alert alert-info">💡 อัปโหลดหนังสือแจ้งสหกรณ์เพื่อเข้าตรวจสอบกิจการและฐานะทางการเงิน</div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group"><label>เลขที่หนังสือ</label><input class="form-control" id="nty-no" placeholder="เช่น กสส. 456/2568"></div>
+            <div class="form-group"><label>วันที่ออกหนังสือ</label><input class="form-control" type="date" id="nty-date"></div>
+            <div class="form-group"><label>ถึง (ชื่อสหกรณ์)</label><input class="form-control" id="nty-to" placeholder="ชื่อสหกรณ์ที่รับหนังสือ" value="สหกรณ์ออมทรัพย์พนักงานเทศบาล จำกัด"></div>
+            <div class="form-group"><label>กำหนดวันเข้าตรวจ</label><input class="form-control" type="date" id="nty-inspect-date" value="2025-11-13"></div>
+            <div class="form-group" style="grid-column:1/-1"><label>เรื่อง / ข้อความสรุป</label><textarea class="form-control" id="nty-detail" rows="2" placeholder="สรุปเนื้อหาหนังสือ">แจ้งกำหนดการเข้าตรวจสอบกิจการและฐานะทางการเงิน ตามมาตรา 19 แห่งพระราชบัญญัติสหกรณ์ พ.ศ. 2542</textarea></div>
+          </div>
+          <div class="upload-zone" onclick="document.getElementById('fi-nty').click()" ondragover="event.preventDefault()" ondrop="doDrop(event,'file-list-nty')">
+            <div style="font-size:32px;margin-bottom:6px">📨</div>
+            <p style="font-size:13px">ลากไฟล์หนังสือแจ้งมาวาง หรือ <strong style="color:var(--primary-light)">คลิกเพื่อเลือก</strong></p>
+            <p style="font-size:11px;color:var(--text2);margin-top:4px">รองรับ PDF, Word, JPG, PNG</p>
+          </div>
+          <input type="file" id="fi-nty" style="display:none" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="addFiles(this,'file-list-nty')">
+          <div class="file-list" id="file-list-nty"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: เอกสารอื่นๆ ══ -->
+    <div class="page" id="page-doc-other">
+      <div class="doc-section">
+        <div class="doc-section-hd">
+          <span class="dsh-icon">🗂️</span>
+          <h3>เอกสารอื่นๆ</h3>
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('fi-oth').click()">+ อัปโหลดไฟล์</button>
+        </div>
+        <div class="doc-section-body">
+          <div class="alert alert-info">💡 อัปโหลดเอกสารอื่นๆ ที่เกี่ยวข้องกับการตรวจการสหกรณ์ เช่น รายงานการตรวจเดิม หลักฐานอื่น ฯลฯ</div>
+          <!-- ตารางรายการเอกสาร -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:13px;font-weight:600;color:var(--primary)">รายการเอกสารทั้งหมด</span>
+            <button class="btn btn-success btn-sm" onclick="addOtherDocRow()">+ เพิ่มรายการ</button>
+          </div>
+          <div style="overflow-x:auto;margin-bottom:14px">
+            <table class="data-table" id="other-doc-table">
+              <thead><tr><th>#</th><th>ชื่อเอกสาร</th><th>ประเภท</th><th>หมายเหตุ</th><th>ไฟล์</th><th>จัดการ</th></tr></thead>
+              <tbody id="other-doc-tbody">
+                <tr><td style="text-align:center;color:var(--text2);padding:18px" colspan="6">ยังไม่มีรายการ — คลิก "+ เพิ่มรายการ"</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="upload-zone" onclick="document.getElementById('fi-oth').click()" ondragover="event.preventDefault()" ondrop="doDrop(event,'file-list-oth')">
+            <div style="font-size:32px;margin-bottom:6px">🗂️</div>
+            <p style="font-size:13px">ลากไฟล์มาวางที่นี่ หรือ <strong style="color:var(--primary-light)">คลิกเพื่อเลือก</strong></p>
+            <p style="font-size:11px;color:var(--text2);margin-top:4px">รองรับไฟล์ทุกประเภท ไม่เกิน 20 MB</p>
+          </div>
+          <input type="file" id="fi-oth" style="display:none" multiple onchange="addFiles(this,'file-list-oth')">
+          <div class="file-list" id="file-list-oth"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: IMPORT ══ -->
+    <div class="page" id="page-import">
+      <div class="import-box" style="margin-bottom:16px">
+        <div style="font-size:44px;margin-bottom:13px">📥</div>
+        <h3 style="font-size:16px;font-weight:700;color:var(--primary);margin-bottom:6px">นำเข้าข้อมูลจากไฟล์</h3>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">รองรับไฟล์ Excel (.xlsx) และ JSON</p>
+        <input type="file" id="imp-fi" style="display:none" accept=".xlsx,.json" onchange="doImport(this)">
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="document.getElementById('imp-fi').click()">📄 นำเข้าจาก Excel/JSON</button>
+          <button class="btn btn-outline" onclick="loadDemo()">🔄 โหลดข้อมูลตัวอย่าง</button>
+        </div>
+      </div>
+      <div class="alert alert-info">💡 คลิก "โหลดข้อมูลตัวอย่าง" เพื่อดูการทำงานของระบบด้วยข้อมูล Demo</div>
+    </div>
+
+    <!-- ══ PAGE: TEAM ══ -->
+    <div class="page" id="page-team">
+      <div class="card">
+        <div class="card-header"><h3>👥 ทีมผู้ตรวจการสหกรณ์ ชุดที่ 8</h3></div>
+        <div class="card-body" style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>ตำแหน่ง</th><th>บทบาท</th><th>รับผิดชอบรายการ</th><th>สถานะ</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>นายเรืองชัย โพนพุฒ</td><td>นักวิชาการสหกรณ์ชำนาญการพิเศษ</td><td>ประธาน</td><td>1, 2, 3, 4, 5</td><td><span class="tag tag-ok">✓ เสร็จแล้ว</span></td></tr>
+              <tr><td>2</td><td>นางสาวฐิติมา กรวาทิน</td><td>นักวิชาการสหกรณ์ปฏิบัติการ</td><td>ผู้ตรวจการ</td><td>6, 7, 8, 9</td><td><span class="tag tag-warn">⏳ กำลังดำเนินการ</span></td></tr>
+              <tr><td>3</td><td>นางสาวนิธิกานต์ จ่าราช</td><td>นักวิชาการสหกรณ์ปฏิบัติการ</td><td>ผู้ตรวจการ</td><td>10, 11, 12</td><td><span class="tag tag-warn">⏳ กำลังดำเนินการ</span></td></tr>
+              <tr><td>4</td><td>นางสาวจุฑามาศ พัดทอง</td><td>นักวิชาการสหกรณ์ปฏิบัติการ</td><td>ผู้ตรวจการ</td><td>13, 14, 15, 16</td><td><span class="tag tag-danger">⏸ ยังไม่เริ่ม</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div><!-- end main-content -->
+</div><!-- end app-shell -->
+
+<!-- PREVIEW MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary)">👁️ ตรวจสอบรายงานก่อนส่งออก</h3>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">ปิด</button>
+      <button class="btn btn-success" onclick="doPrint()">🖨️ พิมพ์</button>
+      <button class="btn btn-primary" onclick="exportWord()">📄 ส่งออก Word</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ======================================================
+   DATA
+====================================================== */
+const SECS=[
+  {id:1,title:"ข้อมูลทั่วไป ณ วันที่ 31 ธันวาคม 2567",f:`- สหกรณ์มีสมาชิก จำนวน 41,987 คน\n- คณะกรรมการดำเนินการตามข้อบังคับ จำนวน 15 คน\n- มีผู้ตรวจสอบกิจการ 1 คณะ ได้แก่ 1. นายบัณฑูร ชุนสิทธิ์ ประธาน 2. นางเนตรนภางค์ นำจิตรไทย 3. นางสาวรัชกมล นำจิตรไทย\n- มีเจ้าหน้าที่สหกรณ์ (รวม) 59 คน\n- ผู้จัดการสหกรณ์ 1 คน คือ นายไพศาล บัวแตง\n- มีการแต่งตั้งกรรมการทำหน้าที่ผู้จัดการสหกรณ์\n- มีการแยกเจ้าหน้าที่การเงินและบัญชีออกจากกัน\n- ปีบัญชีสิ้นสุดวันที่ 31 ธันวาคม ของทุกปี`},
+  {id:2,title:"รายงานการประชุมใหญ่สามัญประจำปี 2567",f:`- จัดประชุมวันที่ 8 กุมภาพันธ์ 2568 สมาชิกเข้าร่วม 3,874 คน จาก 42,602 คน ครบองค์ประชุม\n- ที่ประชุมอนุมัติงบการเงิน ประจำปี 2567 กำไรสุทธิ 542,491,815.34 บาท\n- จัดสรรกำไร: ทุนสำรอง 10% / เงินปันผล 5.20% / เงินเฉลี่ยคืน 11.00%\n- เลือกตั้ง นายนฤชา โฆษาศิวิไลซ์ เป็นประธานกรรมการ\n- วงเงินกู้ยืม 2,000,000,000 บาท อนุมัติเอกฉันท์\n- การลงมติไม่ขัดต่อกฎหมายและข้อบังคับสหกรณ์ฯ`},
+  {id:3,title:"การกำหนดวงเงินกู้ยืมหรือค้ำประกันประจำปี",f:`- ที่ประชุมใหญ่สามัญ 2568 วาระ 4.6 เห็นชอบวงเงินกู้ยืม 2,000,000,000 บาท เท่ากับปีก่อน\n- หนังสือที่ สอ.บก.036/2568 ลงวันที่ 4 ก.พ. 2568 ขอความเห็นชอบ\n- นายทะเบียนสหกรณ์เห็นชอบ หนังสือ กษ 1109/1095 ลงวันที่ 17 มี.ค. 2568`},
+  {id:4,title:"การดำรงตำแหน่งของคณะกรรมการดำเนินการสหกรณ์",f:`สหกรณ์ฯ มีคณะกรรมการดำเนินการ 15 คน\n1. นายนฤชา โฆษาศิวิไลซ์ ประธานกรรมการ วาระที่ 1 ปีที่ 1\n2. นายศิริพันธ์ ศรีกงพลี รองประธานคนที่ 1 วาระที่ 1 ปีที่ 1\n3. นายไพศาล บัวแตง รองประธานคนที่ 2 วาระที่ 1 ปีที่ 2\n4. นายพงษ์ศักดิ์ กวีนันทชัย กรรมการและเหรัญญิก วาระที่ 1 ปีที่ 2\n5. นายอนิรุจ อารีย์ กรรมการและเลขานุการ วาระที่ 1 ปีที่ 1\n(ครบ 15 คน)\n\nวาระการดำรงตำแหน่งถูกต้องตามข้อบังคับสหกรณ์ฯ`},
+  {id:5,title:"รายงานการประชุมคณะกรรมการดำเนินการสหกรณ์",f:`จัดประชุม 10 ครั้ง (ม.ค.-ต.ค. 2568)\n- ครั้งที่ 1: 21 ม.ค. 2568\n- ครั้งที่ 2: 10 ก.พ. 2568\n- ครั้งที่ 3: 25 มี.ค. 2568\n- ครั้งที่ 4: 21 เม.ย. 2568\n- ครั้งที่ 5: 26 พ.ค. 2568\n- ครั้งที่ 6: 24 มิ.ย. 2568\n- ครั้งที่ 7: 22 ก.ค. 2568\n- ครั้งที่ 8: 26 ส.ค. 2568\n- ครั้งที่ 9: 23 ก.ย. 2568\n- ครั้งที่ 10: 22 ต.ค. 2568\n\nการลงมติเป็นไปตามกฎหมาย ข้อบังคับ และระเบียบสหกรณ์ฯ ทุกครั้ง`},
+  {id:6,title:"การปฏิบัติตามแผนงานและงบประมาณรายจ่ายประจำปี",f:`ประมาณการรายรับ รวม 683,310,000 บาท\n- ดอกเบี้ยรับเงินให้กู้ 550,000,000 บาท\n- ผลตอบแทนกองทุนส่วนบุคคล 80,000,000 บาท\n\nประมาณการรายจ่าย รวม 65,361,000 บาท\n- หมวดเงินเดือน 19,200,000 บาท\n- หมวดค่าตอบแทน 12,800,000 บาท\n\nกองทุนส่วนบุคคล 2,300,000,000 บาท (4 บลจ.)\nสมาชิก Mobile APP/Website 29,343 บัญชี`},
+  {id:7,title:"งบทดลอง",f:`- จัดทำงบทดลองเป็นปัจจุบันถึงเดือน ต.ค. 2568 โดยใช้โปรแกรมสำเร็จรูป\n- เก็บรักษาเงินสดตามระเบียบฯ พ.ศ. 2568 ไม่เกินวันละ 500,000 บาท\n- สหกรณ์ฯ ปฏิบัติตามระเบียบที่กำหนด`},
+  {id:8,title:"รายงานผลการตรวจสอบของผู้ตรวจสอบกิจการ",f:`- มีรายงานผู้ตรวจสอบกิจการ 9 ครั้ง (ม.ค.-ก.ย. 2568)\n- ไม่พบข้อสังเกตที่เป็นสาระสำคัญแต่อย่างใด`},
+  {id:9,title:"การให้เงินกู้แก่สมาชิก",f:`เงินกู้ฉุกเฉิน: สมาชิก <5 ปี ≤3 เท่าเงินเดือน / ≥5 ปี ≤5 เท่าเงินเดือน / ส่งคืน ≤20 งวด\nสุ่มตรวจ 21 สัญญา (เอกสารแนบ 1)\n\nเงินกู้สามัญ: สมาชิก 6 เดือน-1 ปี ≤200,000 บ. / ≥5 ปี ≤2,000,000 บ. / ส่งคืน ≤180 งวด\nสุ่มตรวจ 10 สัญญา (เอกสารแนบ 2)`},
+  {id:10,title:"การให้เงินกู้แก่สหกรณ์อื่น",f:`- ไม่ได้กำหนดระเบียบว่าด้วยการให้สหกรณ์อื่นกู้ยืมเงิน\n- ไม่ได้ให้เงินกู้แก่สหกรณ์อื่นแต่อย่างใด`},
+  {id:11,title:"การรับฝากเงินกับสมาชิก",f:`- รับฝากเงิน 1 ประเภท (ออมทรัพย์พิเศษ)\n- ณ 31 ต.ค. 2568 เงินรับฝากรวม 1,612,577,875.18 บาท\n- เปิดบัญชี ปี 2566: 103 บัญชี / ปี 2567: 287 บัญชี / ปี 2568: 341 บัญชี`},
+  {id:12,title:"การรับฝากเงินกับสหกรณ์อื่น",f:`- ไม่มีการทำธุรกิจรับฝากเงินกับสหกรณ์อื่น`},
+  {id:13,title:"การฝากหรือการลงทุนของสหกรณ์",f:`มีการลงทุน 17 รายการ รวม 2,619,005,238.60 บาท\n- หุ้นกู้ CPF 100 ล้าน / CP ALL 100 ล้าน / บ้านปู 150 ล้าน\n- หุ้นสามัญ AOT 939.5 ล้าน / PTT 532.3 ล้าน / หุ้น ชสอ. 140.6 ล้าน`},
+  {id:14,title:"การจัดทำรายงานดำรงสินทรัพย์สภาพคล่องของสหกรณ์",f:`รายงานนายทะเบียนทุกเดือน\n- ต.ค.68: 44.19% / ก.ย.: 43.78% / ส.ค.: 46.08%\n- ก.ค.: 45.23% / มิ.ย.: 39.07% / พ.ค.: 48.42%\nดำรงสินทรัพย์สภาพคล่องเป็นไปตามกฎกระทรวงฯ พ.ศ. 2550 ทุกเดือน`},
+  {id:15,title:"การปฏิบัติตามกฎหมายว่าด้วยการป้องกันและปราบปรามการฟอกเงิน",f:`- มีประกาศนโยบายป้องกันฟอกเงินฯ ประกาศ 9 ก.ค. 2563\n- รายงานต่อกรรมการดำเนินการทุกเดือน\n- ไม่มีธุรกรรมที่ต้องรายงานต่อ ปปง.`},
+  {id:16,title:"การจัดสวัสดิการหรือการตั้งกองทุนสวัสดิการต่างๆ ของสหกรณ์",f:`ทุนสาธารณประโยชน์ ปี 2567 รวม 9,226,000 บาท\n1) อุบัติเหตุ 43 ราย 58,500 บ.  2) อุทกภัย 253 ราย 520,000 บ.\n3) วาตภัย 16 ราย 37,500 บ.  4) อัคคีภัย 4 ราย 38,000 บ.\n5) ถึงแก่กรรม 112 ราย 5,775,000 บ.  6) ทุนการศึกษา 755 ราย 2,797,000 บ.`}
+];
+
+/* ── initial loan data ── */
+const EM_INIT=[
+  {no:"ฉ1-68-001266",mid:"0098724",name:"นางสาวยุรี ภูเกิดพิมพ์",amt:119100,inst:20,date:"06/06/2568",bank:"404-3-34619-0"},
+  {no:"ฉ1-68-001273",mid:"0101169",name:"นายสงกรานต์ สุทธิวงษ์",amt:186000,inst:20,date:"06/06/2568",bank:"885-0-29982-6"},
+  {no:"ฉ1-68-001539",mid:"0081061",name:"นางอังสนา จันทร์ผ่อง",amt:184300,inst:20,date:"03/07/2568",bank:"982-0-88665-1"},
+  {no:"ฉ1-68-001545",mid:"0082434",name:"นายพรประเสริฐ หันดี",amt:232800,inst:20,date:"03/07/2568",bank:"430-0-18631-6"},
+  {no:"ฉ1-68-001547",mid:"0064011",name:"นายอำนาจ เขียวเดชวงษ์",amt:162000,inst:20,date:"03/07/2568",bank:"761-0-65842-1"},
+  {no:"ฉป-68-000476",mid:"0071760",name:"นางสาวอรอนงค์ บัวอาจ",amt:11000,inst:10,date:"03/07/2568",bank:"408-0-37946-3"},
+  {no:"ฉ1-68-001971",mid:"0052062",name:"นางสาวนิตยา วะชุม",amt:207700,inst:20,date:"20/08/2568",bank:"408-0-06570-1"},
+  {no:"ฉป-68-000541",mid:"0084921",name:"นางสาวลลิสา ชมชื่น",amt:7100,inst:9,date:"20/08/2568",bank:"986-4-68122-2"},
+  {no:"ฉ1-68-002329",mid:"0082780",name:"นางสาวสุวิภา นาทันตรึก",amt:170000,inst:20,date:"30/09/2568",bank:"404-1-89816-1"},
+  {no:"ฉ1-68-002334",mid:"0095157",name:"นางปุญญาภา คำฝั้น",amt:94000,inst:20,date:"30/09/2568",bank:"285-0-29045-9"},
+  {no:"ฉ1-68-002338",mid:"0112561",name:"นายเสนาะ ยะป๊อก",amt:85200,inst:20,date:"30/09/2568",bank:"644-0-18579-9"},
+  {no:"ฉ1-68-002342",mid:"0092728",name:"นายนิเวศน์ ศรีตะปัญญะ",amt:98000,inst:20,date:"30/09/2568",bank:"125-1-29217-5"},
+  {no:"ฉป-68-000597",mid:"0078937",name:"นายจีระศักดิ์ ปะทิรัมย์",amt:9400,inst:10,date:"30/09/2568",bank:"308-0-18074-7"},
+  {no:"ฉป-68-000600",mid:"0092367",name:"นางดวงรัตน์ สิงห์ดา",amt:8500,inst:10,date:"30/09/2568",bank:"600-0-32784-6"},
+  {no:"ฉอ-68-002013",mid:"0080987",name:"นางสาวอรทัย สีโลน",amt:78000,inst:20,date:"01/09/2568",bank:"405-0-38265-2"},
+  {no:"ฉอ-68-002015",mid:"0097672",name:"นางสาวอาภรณ์ สุขสำราญ",amt:192200,inst:20,date:"01/09/2568",bank:"705-0-12037-5"},
+  {no:"ฉอ-68-002017",mid:"0098331",name:"นางสาวตริยาภรณ์ กางทอง",amt:173400,inst:20,date:"01/09/2568",bank:"858-0-07720-6"},
+  {no:"ฉอ-68-002023",mid:"0104664",name:"นายธรรมนูญ อรรคสูรย์",amt:120000,inst:20,date:"02/09/2568",bank:"208-0-86992-2"},
+  {no:"ฉอ-68-002071",mid:"0105917",name:"นางสาวภาพร จิตต์ตั้ง",amt:122000,inst:20,date:"30/10/2568",bank:"116-0-29964-1"},
+  {no:"ฉอ-68-002573",mid:"0108200",name:"นางสาวสายฝน สว่างไสว",amt:247200,inst:20,date:"30/10/2568",bank:"510-0-50127-8"}
+];
+const OR_INIT=[
+  {no:"ส168000795",date:"27/05/2568",name:"นางมัณฑศิลป์ พลสวัสดิ์",mid:"008743",amt:2000000,inst:177,gua:3},
+  {no:"ส168000796",date:"14/05/2568",name:"นางสาวมยุรี เขียวใหม่",mid:"0105886",amt:300000,inst:143,gua:1},
+  {no:"ส168000797",date:"29/05/2568",name:"นางสมศรี นนท์ศิริ",mid:"0112965",amt:500000,inst:100,gua:1},
+  {no:"ส168000798",date:"14/05/2568",name:"นางสาวเวฬุวัน พูลสุข",mid:"0081047",amt:500000,inst:109,gua:1},
+  {no:"ส168000799",date:"30/04/2568",name:"นางภคภัทร เดชชาติธนาคุณ",mid:"0095193",amt:900000,inst:170,gua:2},
+  {no:"ส168001695",date:"15/09/2568",name:"นางสาวณัฏฐพัชร์ ถิรสุทธินันท์",mid:"0102811",amt:1201000,inst:132,gua:3},
+  {no:"ส168001696",date:"23/09/2568",name:"นางสาวเสฏฐีรัตน์ เวทัสปภัสสร",mid:"0071742",amt:1776000,inst:96,gua:3},
+  {no:"ส168001697",date:"11/09/2568",name:"ว่าที่ร.ต.ชาญยุทธ สุกเรือง",mid:"0093558",amt:1860000,inst:120,gua:3},
+  {no:"ส168001699",date:"26/09/2568",name:"นางวนิดา นาพรม",mid:"0068069",amt:1500000,inst:132,gua:3},
+  {no:"ส168001702",date:"11/09/2568",name:"นางเรียมจิตร สิงห์นอก",mid:"01000515",amt:1333000,inst:132,gua:3}
+];
+
+const CLR=['#1a3a5c','#2563a8','#16a085','#c8960c','#c0392b','#8e44ad','#2980b9','#27ae60','#d4700a','#16a085','#2563a8','#c0392b','#c8960c','#1a3a5c','#27ae60','#8e44ad'];
+
+/* runtime store for editable loan rows */
+let loanData = { em: [...EM_INIT], atm: [], or: [...OR_INIT], sp: [] };
+let otherDocRows = [];
+let otherDocCount = 0;
+
+/* ======================================================
+   INIT
+====================================================== */
+function init(){
+  renderSections();
+  renderLoanTable('em');
+  renderLoanTable('atm');
+  renderLoanTable('or');
+  loadStorage();
+  updateProgress();
+}
+
+/* ── Form sections ── */
+function renderSections(){
+  const c1=document.getElementById('secs-1-8');
+  const c2=document.getElementById('secs-9-16');
+  SECS.forEach(s=>{
+    const h=`<div class="form-sec">
+      <div class="form-sec-hd"><div class="sec-num">${s.id}</div>${s.title}
+        <span id="sst-${s.id}" style="margin-left:auto;font-size:11px;font-weight:400;opacity:.8">✏️ รอกรอก</span>
+      </div>
+      <div class="form-sec-body">
+        <div style="display:grid;grid-template-columns:2fr 1fr 80px;gap:11px">
+          <div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">ข้อเท็จจริงที่ตรวจพบ (ระบุรายละเอียด)</div>
+            <textarea class="form-control" id="sf-${s.id}" rows="6" oninput="secChange(${s.id})">${s.f}</textarea></div>
+          <div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">ข้อเสนอความเห็น/วิธีการแก้ไข</div>
+            <textarea class="form-control" id="so-${s.id}" rows="6" oninput="secChange(${s.id})"></textarea></div>
+          <div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">ระยะเวลา<br>(วัน)</div>
+            <input class="form-control" id="sd-${s.id}" type="number" min="0" oninput="secChange(${s.id})"></div>
+        </div>
+      </div></div>`;
+    (s.id<=8?c1:c2).insertAdjacentHTML('beforeend',h);
+  });
+}
+
+/* ── Loan tables (editable) ── */
+function renderLoanTable(type) {
+  const conf = {
+    em:  { tbody:'em-tbody',  total:'em-total',  cols:'standard' },
+    atm: { tbody:'atm-tbody', total:'atm-total', cols:'standard' },
+    or:  { tbody:'or-tbody',  total:'or-total',  cols:'ordinary' },
+    sp:  { tbody:'sp-tbody',  total:'sp-total',  cols:'special'  }
+  }[type];
+  const tbody = document.getElementById(conf.tbody);
+  const rows = loanData[type];
+  let totalEl = document.getElementById(conf.total);
+  let html = '';
+  if (!rows || rows.length === 0) {
+    html = `<tr><td colspan="9" style="text-align:center;color:var(--text2);padding:18px;font-size:13px">ยังไม่มีข้อมูล — คลิก "+ เพิ่มสัญญา"</td></tr>`;
+  } else {
+    rows.forEach((r, i) => {
+      if (conf.cols === 'standard') {
+        html += `<tr>
+          <td style="text-align:center;font-size:12px;color:var(--text2)">${i+1}</td>
+          <td><input value="${esc(r.no)}" onchange="loanData['${type}'][${i}].no=this.value" style="min-width:130px"></td>
+          <td><input value="${esc(r.mid)}" onchange="loanData['${type}'][${i}].mid=this.value" style="min-width:85px"></td>
+          <td><input value="${esc(r.name)}" onchange="loanData['${type}'][${i}].name=this.value" style="min-width:150px"></td>
+          <td><input type="number" value="${r.amt}" onchange="loanData['${type}'][${i}].amt=+this.value;updateLoanTotal('${type}')" style="min-width:100px;text-align:right"></td>
+          <td><input type="number" value="${r.inst}" onchange="loanData['${type}'][${i}].inst=+this.value" style="min-width:50px;text-align:center"></td>
+          <td><input value="${esc(r.date)}" onchange="loanData['${type}'][${i}].date=this.value" style="min-width:100px"></td>
+          <td><input value="${esc(r.bank||'')}" onchange="loanData['${type}'][${i}].bank=this.value" style="min-width:120px"></td>
+          <td style="text-align:center"><button class="btn btn-danger btn-xs" onclick="delLoanRow('${type}',${i})">ลบ</button></td>
+        </tr>`;
+      } else if (conf.cols === 'ordinary') {
+        html += `<tr>
+          <td style="text-align:center;font-size:12px;color:var(--text2)">${i+1}</td>
+          <td><input value="${esc(r.no)}" onchange="loanData['${type}'][${i}].no=this.value" style="min-width:120px"></td>
+          <td><input value="${esc(r.date)}" onchange="loanData['${type}'][${i}].date=this.value" style="min-width:100px"></td>
+          <td><input value="${esc(r.name)}" onchange="loanData['${type}'][${i}].name=this.value" style="min-width:150px"></td>
+          <td><input value="${esc(r.mid)}" onchange="loanData['${type}'][${i}].mid=this.value" style="min-width:85px"></td>
+          <td><input type="number" value="${r.amt}" onchange="loanData['${type}'][${i}].amt=+this.value;updateLoanTotal('${type}')" style="min-width:100px;text-align:right"></td>
+          <td><input type="number" value="${r.inst}" onchange="loanData['${type}'][${i}].inst=+this.value" style="min-width:50px;text-align:center"></td>
+          <td><input type="number" value="${r.gua||1}" onchange="loanData['${type}'][${i}].gua=+this.value" style="min-width:50px;text-align:center"></td>
+          <td style="text-align:center"><button class="btn btn-danger btn-xs" onclick="delLoanRow('${type}',${i})">ลบ</button></td>
+        </tr>`;
+      } else {
+        html += `<tr>
+          <td style="text-align:center;font-size:12px;color:var(--text2)">${i+1}</td>
+          <td><input value="${esc(r.no||'')}" onchange="loanData['${type}'][${i}].no=this.value" style="min-width:120px"></td>
+          <td><input value="${esc(r.date||'')}" onchange="loanData['${type}'][${i}].date=this.value" style="min-width:100px"></td>
+          <td><input value="${esc(r.name||'')}" onchange="loanData['${type}'][${i}].name=this.value" style="min-width:150px"></td>
+          <td><input value="${esc(r.mid||'')}" onchange="loanData['${type}'][${i}].mid=this.value" style="min-width:85px"></td>
+          <td><input type="number" value="${r.amt||0}" onchange="loanData['${type}'][${i}].amt=+this.value;updateLoanTotal('${type}')" style="min-width:100px;text-align:right"></td>
+          <td><input type="number" value="${r.inst||0}" onchange="loanData['${type}'][${i}].inst=+this.value" style="min-width:50px;text-align:center"></td>
+          <td><input value="${esc(r.collateral||'')}" onchange="loanData['${type}'][${i}].collateral=this.value" style="min-width:120px"></td>
+          <td style="text-align:center"><button class="btn btn-danger btn-xs" onclick="delLoanRow('${type}',${i})">ลบ</button></td>
+        </tr>`;
+      }
+    });
+  }
+  if (tbody) tbody.innerHTML = html;
+  updateLoanTotal(type);
+}
+
+function updateLoanTotal(type) {
+  const total = (loanData[type]||[]).reduce((a,r)=>a+(+r.amt||0), 0);
+  const el = document.getElementById(type+'-total');
+  if (el) el.textContent = total.toLocaleString();
+}
+
+function addLoanRow(type) {
+  const newRow = type==='or'||type==='sp'
+    ? {no:'',date:'',name:'',mid:'',amt:0,inst:0,gua:1,collateral:''}
+    : {no:'',mid:'',name:'',amt:0,inst:0,date:'',bank:''};
+  loanData[type].push(newRow);
+  renderLoanTable(type);
+  toast('✅ เพิ่มแถวใหม่เรียบร้อย');
+}
+
+function delLoanRow(type, idx) {
+  if (!confirm('ต้องการลบรายการนี้?')) return;
+  loanData[type].splice(idx, 1);
+  renderLoanTable(type);
+  toast('🗑️ ลบรายการเรียบร้อย');
+}
+
+function saveLoanData(type) {
+  try { localStorage.setItem('loan_'+type, JSON.stringify(loanData[type])); } catch(e) {}
+  toast('✅ บันทึกข้อมูลเงินกู้เรียบร้อย');
+}
+
+/* ── Other docs ── */
+function addOtherDocRow() {
+  otherDocCount++;
+  const id = otherDocCount;
+  const tbody = document.getElementById('other-doc-tbody');
+  // Remove empty state row
+  if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.id = 'fi-row-' + id;
+  input.style.display = 'none';
+  input.onchange = function() {
+    const n = this.files[0]?.name || '';
+    const cell = document.getElementById('row-file-' + id);
+    if (cell) cell.textContent = n || '—';
+  };
+  document.body.appendChild(input);
+  const tr = document.createElement('tr');
+  tr.id = 'doc-row-' + id;
+  tr.innerHTML = `
+    <td style="text-align:center;color:var(--text2);font-size:12px">${id}</td>
+    <td><input class="form-control" style="border:1px solid var(--border);padding:4px 8px;font-size:12.5px" placeholder="ชื่อเอกสาร..."></td>
+    <td>
+      <select class="form-control" style="border:1px solid var(--border);padding:4px 8px;font-size:12.5px">
+        <option>รายงานการตรวจ</option>
+        <option>หลักฐานประกอบ</option>
+        <option>ระเบียบ/ข้อบังคับ</option>
+        <option>บันทึกข้อความ</option>
+        <option>อื่นๆ</option>
+      </select>
+    </td>
+    <td><input class="form-control" style="border:1px solid var(--border);padding:4px 8px;font-size:12.5px" placeholder="หมายเหตุ..."></td>
+    <td>
+      <span id="row-file-${id}" style="font-size:11.5px;color:var(--text2)">—</span>
+      <button class="btn btn-outline btn-xs" style="margin-left:6px" onclick="document.getElementById('fi-row-${id}').click()">เลือกไฟล์</button>
+    </td>
+    <td style="text-align:center"><button class="btn btn-danger btn-xs" onclick="document.getElementById('doc-row-${id}').remove();if(!document.querySelector('#other-doc-tbody tr'))document.getElementById('other-doc-tbody').innerHTML='<tr><td colspan=6 style=text-align:center;color:var(--text2);padding:18px>ยังไม่มีรายการ</td></tr>'">ลบ</button></td>`;
+  tbody.appendChild(tr);
+  toast('✅ เพิ่มรายการเอกสารเรียบร้อย');
+}
+
+/* ======================================================
+   NAVIGATION
+====================================================== */
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  const T={
+    dashboard:'Dashboard ภาพรวม',
+    form:'กรอกแบบรายงานผลการตรวจการสหกรณ์',
+    loans:'ข้อมูลสัญญาเงินกู้',
+    attachments:'เอกสารแนบทั่วไป',
+    'doc-appointment':'คำสั่งแต่งตั้งผู้ตรวจการสหกรณ์',
+    'doc-notify':'หนังสือแจ้งสหกรณ์',
+    'doc-other':'เอกสารอื่นๆ',
+    import:'นำเข้าข้อมูล',
+    team:'ทีมผู้ตรวจการ'
+  };
+  document.getElementById('topbar-title').textContent = T[id]||id;
+  if(id==='dashboard')updateProgress();
+}
+
+function showTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(el)el.classList.add('active');
+}
+
+function switchLoanTab(type, el) {
+  document.querySelectorAll('.loan-tab-content').forEach(t=>t.style.display='none');
+  document.getElementById('lt-'+type).style.display='block';
+  document.querySelectorAll('#loan-tabs .tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+}
+
+/* ======================================================
+   STORAGE / PROGRESS
+====================================================== */
+function secChange(id){
+  const fv=document.getElementById('sf-'+id)?.value||'';
+  const ov=document.getElementById('so-'+id)?.value||'';
+  const dv=document.getElementById('sd-'+id)?.value||'';
+  try{localStorage.setItem('s'+id,JSON.stringify({f:fv,o:ov,d:dv}));}catch(e){}
+  const t=document.getElementById('sst-'+id);
+  if(t)t.textContent=fv.length>5?'✅ กรอกแล้ว':'✏️ รอกรอก';
+}
+
+function saveAll(){
+  SECS.forEach(s=>secChange(s.id));
+  const keys=['f-head','f-head-pos','f-team','f-coop','f-date1','f-date2','f-time','f-law','f-insp','f-note','sig1','sig2','sig3','sig4'];
+  const d={};keys.forEach(k=>{const e=document.getElementById(k);if(e)d[k]=e.value;});
+  try{localStorage.setItem('hd',JSON.stringify(d));}catch(e){}
+  toast('✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว');
+}
+
+function loadStorage(){
+  SECS.forEach(s=>{
+    try{const d=JSON.parse(localStorage.getItem('s'+s.id));if(!d)return;
+      const f=document.getElementById('sf-'+s.id);if(f&&d.f)f.value=d.f;
+      const o=document.getElementById('so-'+s.id);if(o&&d.o!==undefined)o.value=d.o;
+      const dy=document.getElementById('sd-'+s.id);if(dy&&d.d!==undefined)dy.value=d.d;
+      const t=document.getElementById('sst-'+s.id);if(t&&d.f&&d.f.length>5)t.textContent='✅ กรอกแล้ว';
+    }catch(e){}
+  });
+  try{const d=JSON.parse(localStorage.getItem('hd')||'{}');Object.keys(d).forEach(k=>{const e=document.getElementById(k);if(e)e.value=d[k];});}catch(e){}
+  try{const em=JSON.parse(localStorage.getItem('loan_em'));if(em&&em.length)loanData.em=em;renderLoanTable('em');}catch(e){}
+  try{const or=JSON.parse(localStorage.getItem('loan_or'));if(or&&or.length)loanData.or=or;renderLoanTable('or');}catch(e){}
+}
+
+function updateProgress(){
+  let filled=0,html='';
+  SECS.forEach((s,i)=>{
+    const f=document.getElementById('sf-'+s.id);
+    const ok=f?f.value.length>5:s.f.length>5;
+    if(ok)filled++;
+    const pct=ok?100:0;
+    html+=`<div class="progress-item"><div class="progress-label">
+      <span style="font-size:11px;font-weight:600">ข้อ ${s.id}. ${s.title.substring(0,26)}${s.title.length>26?'...':''}</span>
+      <span style="font-size:10.5px;color:var(--text2)">${ok?'✓ เสร็จแล้ว':'รอกรอก'}</span>
+    </div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${CLR[i]}"></div></div></div>`;
+  });
+  const pl=document.getElementById('progress-list');if(pl)pl.innerHTML=html;
+  const pct=Math.round(filled/SECS.length*100);
+  const dp=document.getElementById('dash-pct');if(dp)dp.textContent=pct+'%';
+  const df=document.getElementById('dash-filled');if(df)df.textContent=filled+' / '+SECS.length;
+}
+
+function updateSubtitle(){
+  const c=document.getElementById('f-coop')?.value||'';
+  const t=document.getElementById('f-team')?.value||'';
+  document.getElementById('topbar-sub').textContent=c+' | '+t;
+}
+
+/* ======================================================
+   UTILS
+====================================================== */
+function getVal(id){return document.getElementById(id)?.value||'';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function nl2br(s){return esc(s).replace(/\n/g,'<br>');}
+
+/* ======================================================
+   PREVIEW
+====================================================== */
+function showPreview(){
+  const coop=getVal('f-coop')||'สหกรณ์ออมทรัพย์พนักงานเทศบาล จำกัด';
+  const head=getVal('f-head');const hpos=getVal('f-head-pos');const team=getVal('f-team');
+  const insp=getVal('f-insp');const note=getVal('f-note');
+  const s1=getVal('sig1');const s2=getVal('sig2');const s3=getVal('sig3');const s4=getVal('sig4');
+  const inspStr=insp.split('\n').filter(Boolean).join(', ');
+  let rows='';
+  SECS.forEach(s=>{
+    const f=document.getElementById('sf-'+s.id)?.value||s.f;
+    const o=document.getElementById('so-'+s.id)?.value||'';
+    const d=document.getElementById('sd-'+s.id)?.value||'';
+    rows+=`<tr>
+      <td style="border:1px solid #bbb;padding:5px 7px;font-weight:600;font-size:11.5px;vertical-align:top">${esc(s.id+'. '+s.title)}</td>
+      <td style="border:1px solid #bbb;padding:5px 7px;font-size:11.5px;vertical-align:top">${nl2br(f)}</td>
+      <td style="border:1px solid #bbb;padding:5px 7px;font-size:11.5px;vertical-align:top">${nl2br(o)}</td>
+      <td style="border:1px solid #bbb;padding:5px 7px;font-size:11.5px;text-align:center;vertical-align:top">${esc(d)}</td>
+    </tr>`;
+  });
+  document.getElementById('modal-body').innerHTML=`
+    <div style="font-family:'Sarabun',sans-serif;font-size:13px;line-height:1.8">
+      <div style="text-align:center;margin-bottom:14px"><div style="font-size:15.5px;font-weight:800">แบบรายงานการตรวจสอบกิจการและฐานะการเงิน</div></div>
+      <p style="margin-bottom:10px">ข้าพเจ้า <b>${esc(head)}</b> ตำแหน่ง <b>${esc(hpos)}</b> ประธานคณะผู้ตรวจการสหกรณ์ ${esc(team)} พร้อมด้วย ${esc(inspStr)} คณะผู้ตรวจการสหกรณ์</p>
+      <p style="margin-bottom:13px">ได้ตรวจสอบกิจการและฐานะทางการเงินของ<b>${esc(coop)}</b> ตามมาตรา 19 แห่งพระราชบัญญัติสหกรณ์ พ.ศ. 2542 ปรากฏผลการตรวจสอบ ดังนี้</p>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#1a3a5c;color:#fff">
+          <th style="border:1px solid #bbb;padding:7px;font-size:12px;min-width:140px">รายการที่ตรวจสอบ</th>
+          <th style="border:1px solid #bbb;padding:7px;font-size:12px;min-width:260px">ข้อเท็จจริงที่ตรวจพบ</th>
+          <th style="border:1px solid #bbb;padding:7px;font-size:12px;min-width:150px">ข้อเสนอความเห็น/วิธีการแก้ไข</th>
+          <th style="border:1px solid #bbb;padding:7px;font-size:12px;min-width:70px">ระยะเวลา (วัน)</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      <p style="margin-top:14px">${esc(note)}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;text-align:center">
+        <div><div style="border-bottom:1px solid #333;padding-top:36px;margin-bottom:6px"></div>(${esc(s1)})<br>ผู้ตรวจการสหกรณ์</div>
+        <div><div style="border-bottom:1px solid #333;padding-top:36px;margin-bottom:6px"></div>(${esc(s2)})<br>ผู้ตรวจการสหกรณ์</div>
+        <div><div style="border-bottom:1px solid #333;padding-top:36px;margin-bottom:6px"></div>(${esc(s3)})<br>ผู้ตรวจการสหกรณ์</div>
+        <div><div style="border-bottom:1px solid #333;padding-top:36px;margin-bottom:6px"></div>(${esc(s4)})<br>ผู้ตรวจการสหกรณ์</div>
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.add('active');
+}
+function closeModal(){document.getElementById('modal').classList.remove('active');}
+
+/* ======================================================
+   EXPORT WORD
+====================================================== */
+function exportWord(){
+  const coop=getVal('f-coop')||'สหกรณ์ออมทรัพย์พนักงานเทศบาล จำกัด';
+  const head=getVal('f-head');const hpos=getVal('f-head-pos');const team=getVal('f-team');
+  const insp=getVal('f-insp');const note=getVal('f-note');
+  const d1=getVal('f-date1');const d2=getVal('f-date2');
+  const s1=getVal('sig1');const s2=getVal('sig2');const s3=getVal('sig3');const s4=getVal('sig4');
+  const inspStr=insp.split('\n').filter(Boolean).map(l=>{const p=l.split(' - ');return esc(p[0]||'')+' ตำแหน่ง '+esc(p[1]||'');}).join(' ');
+  let rows='';
+  SECS.forEach(s=>{
+    const f=document.getElementById('sf-'+s.id)?.value||s.f;
+    const o=document.getElementById('so-'+s.id)?.value||'';
+    const d=document.getElementById('sd-'+s.id)?.value||'';
+    rows+=`<tr>
+      <td style="border:1px solid #333;padding:5pt 7pt;font-weight:600;font-size:12pt;vertical-align:top">${esc(s.id+'. '+s.title)}</td>
+      <td style="border:1px solid #333;padding:5pt 7pt;font-size:12pt;vertical-align:top">${nl2br(f)}</td>
+      <td style="border:1px solid #333;padding:5pt 7pt;font-size:12pt;vertical-align:top">${nl2br(o)}</td>
+      <td style="border:1px solid #333;padding:5pt 7pt;font-size:12pt;text-align:center;vertical-align:top">${esc(d)}</td>
+    </tr>`;
+  });
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  body{font-family:TH SarabunPSK,'Sarabun',sans-serif;font-size:14pt;line-height:1.9;margin:2cm 2.5cm}
+  h2{text-align:center;font-size:17pt;margin-bottom:14pt}p{margin-bottom:8pt}
+  table{width:100%;border-collapse:collapse}
+  th{background:#1a3a5c;color:#fff;border:1px solid #333;padding:6pt 8pt;font-size:12pt}
+  .sg{display:grid;grid-template-columns:1fr 1fr;gap:60pt;margin-top:50pt;text-align:center}
+  .sl{border-bottom:1px solid #333;padding-top:40pt;margin-bottom:5pt}
+</style></head><body>
+<h2>แบบรายงานการตรวจสอบกิจการและฐานะการเงิน</h2>
+<p>ข้าพเจ้า <b>${esc(head)}</b> ตำแหน่ง <b>${esc(hpos)}</b> ประธานคณะผู้ตรวจการสหกรณ์ ${esc(team)} พร้อมด้วย ${inspStr} คณะผู้ตรวจการสหกรณ์</p>
+<p>ได้ตรวจสอบกิจการและฐานะทางการเงินของ<b>${esc(coop)}</b> ตามมาตรา 19 แห่งพระราชบัญญัติสหกรณ์ พ.ศ. 2542 เมื่อวันที่ ${esc(d1)} ถึงวันที่ ${esc(d2)} ปรากฏผลการตรวจสอบ ดังนี้</p>
+<table><thead><tr>
+  <th style="width:18%">รายการที่ตรวจสอบ</th>
+  <th style="width:48%">ข้อเท็จจริงที่ตรวจพบ (ระบุรายละเอียด)</th>
+  <th style="width:24%">ข้อเสนอความเห็น/วิธีการแก้ไข</th>
+  <th style="width:10%">ระยะเวลา (วัน)</th>
+</tr></thead><tbody>${rows}</tbody></table>
+<p style="margin-top:16pt">${esc(note)}</p>
+<div class="sg">
+  <div><div class="sl"></div>(${esc(s1)})<br>ผู้ตรวจการสหกรณ์</div>
+  <div><div class="sl"></div>(${esc(s2)})<br>ผู้ตรวจการสหกรณ์</div>
+  <div><div class="sl"></div>(${esc(s3)})<br>ผู้ตรวจการสหกรณ์</div>
+  <div><div class="sl"></div>(${esc(s4)})<br>ผู้ตรวจการสหกรณ์</div>
+</div></body></html>`;
+  const blob=new Blob([html],{type:'application/msword;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='รายงานตรวจการสหกรณ์_'+coop.replace(/\s/g,'_')+'.doc';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✅ ดาวน์โหลดไฟล์ Word เรียบร้อยแล้ว');
+}
+
+/* ======================================================
+   PRINT / FILES
+====================================================== */
+function doPrint(){closeModal();showPage('form',null);setTimeout(()=>window.print(),300);}
+
+function addFiles(input, listId){
+  const list=document.getElementById(listId);
+  Array.from(input.files).forEach(f=>{
+    const icon=f.name.endsWith('.pdf')?'📄':f.name.endsWith('.xlsx')||f.name.endsWith('.xls')?'📊':f.name.endsWith('.doc')||f.name.endsWith('.docx')?'📝':f.name.match(/\.(jpg|jpeg|png)$/i)?'🖼️':'📁';
+    const item=document.createElement('div');
+    item.className='file-item';
+    item.innerHTML=`<span style="font-size:18px">${icon}</span><div class="fi-meta"><div class="fi-name">${esc(f.name)}</div><div class="fi-size">${(f.size/1024).toFixed(0)} KB</div></div><button class="rm-btn" onclick="this.closest('.file-item').remove()">✕</button>`;
+    list.appendChild(item);
+  });
+  toast('✅ อัปโหลด '+input.files.length+' ไฟล์เรียบร้อย');
+}
+
+function doDrop(e, listId){
+  e.preventDefault();
+  addFiles({files:e.dataTransfer.files}, listId);
+}
+
+function doImport(i){if(i.files.length)toast('📥 นำเข้าข้อมูลเรียบร้อย — กรุณาตรวจสอบแบบฟอร์ม');}
+function loadDemo(){toast('✅ โหลดข้อมูลตัวอย่างเรียบร้อย');showPage('form',document.querySelectorAll('.nav-item')[1]);}
+
+/* TOAST */
+let _tt;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.opacity='1';t.style.transform='translateY(0)';
+  clearTimeout(_tt);_tt=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(8px)';},3200);
+}
+
+init();
+</script>
+</body>
+</html>
